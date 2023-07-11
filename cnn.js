@@ -22,6 +22,10 @@ const connectionString = {
         ca: fs.readFileSync("DigiCertGlobalRootCA.crt (1).pem")
     }
 };
+//Hola mundo en el servidor de bienvenida 
+app.get('/', (req, res) => {
+    res.send('Hola mundo');
+});
 
 // obtener los datos de los usuarios
 app.get('/minimarketdemoWeb/apirest/seguridades/usuarios', (req, res) => {
