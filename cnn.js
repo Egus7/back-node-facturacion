@@ -24,7 +24,7 @@ const connectionString = {
 };
 //Hola mundo en el servidor de bienvenida 
 app.get('/', (req, res) => {
-    res.send('Hola mundo');
+    res.send('Hola mundo es una API Rest de mmarketdemo');
 });
 
 // obtener los datos de los usuarios
