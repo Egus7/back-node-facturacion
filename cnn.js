@@ -3,6 +3,8 @@ const bodyParse = require('body-parser');
 const cors = require('cors');
 const port = process.env.PORT || 8080;
 const app = express();
+const fs = require('fs');
+
 
 const { Client } = require('pg');
 
@@ -10,13 +12,22 @@ app.use(bodyParse.urlencoded({ extended: false }));
 app.use(bodyParse.json());
 app.use(cors());
 
+const connectionString = {
+    host: "servergrupo1.postgres.database.azure.com",
+    user: "grupo1",
+    password: "$erver2022",
+    database: "mmarketdemo",
+    port: 5432,
+    ssl: {
+        ca: fs.readFileSync("DigiCertGlobalRootCA.crt (1).pem")
+    }
+};
+
 // obtener los datos de los usuarios
 app.get('/minimarketdemoWeb/apirest/seguridades/usuarios', (req, res) => {
-    const connectionString = 'postgres://postgres:erigust1009@localhost:5432/mmarketdemo';
 
-    const client = new Client({
-        connectionString: connectionString
-    });
+    const client = new Client((connectionString));
+
     client.connect();
 
     client.query('SELECT * FROM seg_usuario ORDER BY id_seg_usuario')
@@ -34,11 +45,8 @@ app.get('/minimarketdemoWeb/apirest/seguridades/usuarios', (req, res) => {
 app.get('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => {
     const { id } = req.params;
 
-    const connectionString = 'postgres://postgres:erigust1009@localhost:5432/mmarketdemo';
 
-    const client = new Client({
-        connectionString: connectionString
-    });
+    const client = new Client((connectionString));
 
     client.connect();
 
@@ -57,13 +65,7 @@ app.get('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => {
 app.post('/minimarketdemoWeb/apirest/seguridades/usuarios', (req, res) => {
     const {codigo, apellidos, nombres, correo, clave, activo} = req.body;
 
-    const connectionString = 'postgres://postgres:erigust1009@localhost:5432/mmarketdemo';
-
-    const connectionData = {
-        connectionString: connectionString
-    };
-
-    const client = new Client(connectionData);
+    const client = new Client(connectionString);
 
     client.connect();
 
@@ -88,13 +90,7 @@ app.put('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => {
     const { id } = req.params;
     const {codigo, apellidos, nombres, correo, clave, activo} = req.body;
 
-    const connectionString = 'postgres://postgres:erigust1009@localhost:5432/mmarketdemo';
-
-    const connectionData = {
-        connectionString: connectionString
-    };
-
-    const client = new Client(connectionData);
+    const client = new Client(connectionString);
 
     client.connect();
 
@@ -118,13 +114,7 @@ app.put('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => {
 app.delete('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => {
     const { id } = req.params;
 
-    const connectionString = 'postgres://postgres:erigust1009@localhost:5432/mmarketdemo';
-
-    const connectionData = {
-        connectionString: connectionString
-    };
-
-    const client = new Client(connectionData);
+    const client = new Client(connectionString);
 
     client.connect();
     
@@ -139,6 +129,7 @@ app.delete('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => 
             client.end();
         });
 });
+
 
 
 // Iniciar el servidor
