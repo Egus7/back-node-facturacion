@@ -11,6 +11,10 @@ app.use(bodyParse.urlencoded({ extended: false }));
 app.use(bodyParse.json());
 app.use(cors());
 
+//Hola mundo en el servidor de bienvenida 
+app.get('/', (req, res) => {
+    res.send('Hola mundo,  esta es una API Rest de facturacion');
+});
 
 // obtener los datos de los productos
 app.get('/facturacionWeb/apirest/productos', (req, res) => {
