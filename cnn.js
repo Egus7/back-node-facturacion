@@ -93,6 +93,6 @@ app.delete('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => 
 });
 
 // Iniciar el servidor
-app.listen(port.cnn, () => {
-  console.log(`Servidor en ejecución en el puerto: http://localhost:${port.cnn}`);
+app.listen(port, () => {
+  console.log(`Servidor en ejecución en el puerto: http://localhost:${port}`);
 });
