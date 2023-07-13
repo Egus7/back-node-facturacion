@@ -3,23 +3,19 @@ const bodyParse = require('body-parser');
 const cors = require('cors');
 const port = require('./port');
 const app = express();
-
+ 
 //prueba
-const { clientMarket } = require('./database');
+const { clientFacturacion } = require('./database');
 
 app.use(bodyParse.urlencoded({ extended: false }));
 app.use(bodyParse.json());
 app.use(cors());
 
-//Hola mundo en el servidor de bienvenida 
-app.get('/', (req, res) => {
-    res.send('Hola mundo es una API Rest de mmarketdemo');
-});
 
-// obtener los datos de los usuarios
-app.get('/minimarketdemoWeb/apirest/seguridades/usuarios', (req, res) => {
+// obtener los datos de los productos
+app.get('/facturacionWeb/apirest/productos', (req, res) => {
 
-    clientMarket.query('SELECT * FROM seg_usuario ORDER BY id_seg_usuario')
+    clientFacturacion.query('SELECT * FROM producto ORDER BY codigo_producto')
         .then(response => {
             res.json(response.rows);
         })
@@ -28,11 +24,11 @@ app.get('/minimarketdemoWeb/apirest/seguridades/usuarios', (req, res) => {
         });
 });
 
-// obtener los datos de un usuario
-app.get('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => {
+// obtener los datos de un producto
+app.get('/facturacionWeb/apirest/productos/:id', (req, res) => {
     const { id } = req.params;
 
-    clientMarket.query(`SELECT * FROM seg_usuario WHERE id_seg_usuario = '${id}'`)
+    clientFacturacion.query(`SELECT * FROM producto WHERE codigo_producto = '${id}'`)
         .then(response => {
             res.json(response.rows);
         })
@@ -42,57 +38,57 @@ app.get('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => {
 });
 
 // para insertar un usuario
-app.post('/minimarketdemoWeb/apirest/seguridades/usuarios', (req, res) => {
-    const {codigo, apellidos, nombres, correo, clave, activo} = req.body;
+app.post('/facturacionWeb/apirest/productos', (req, res) => {
+    const {codigo_producto, nombre, descripcion, precio_unitario, existencia, tiene_impuesto} = req.body;
 
-    const query = `INSERT INTO seg_usuario (codigo, apellidos, nombres, correo, clave, activo) 
+    const query = `INSERT INTO producto (codigo_producto, nombre, descripcion, precio_unitario, existencia, tiene_impuesto) 
                     VALUES ($1, $2, $3, $4, $5, $6)`;
-    const values = [codigo, apellidos, nombres, correo, clave, activo];
+    const values = [codigo_producto, nombre, descripcion, precio_unitario, existencia, tiene_impuesto];
     
-    clientMarket.query(query, values)
+    clientFacturacion.query(query, values)
         .then(() => {
-            res.status(201).send('Usuario agregado');
+            res.status(201).send('Producto gregado');
         })
         .catch(err => {
             console.error(err);
-            res.status(400).send('Error al agregar usuario');
+            res.status(400).send('Error al agregar producto');
         });
 });
 
-// para actualizar un usuario
-app.put('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => {
+// para actualizar un producto
+app.put('/facturacionWeb/apirest/productos/:id', (req, res) => {
     const { id } = req.params;
-    const {codigo, apellidos, nombres, correo, clave, activo} = req.body;
+    const {nombre, descripcion, precio_unitario, existencia, tiene_impuesto} = req.body;
 
-    const query = `UPDATE seg_usuario SET codigo = $1, apellidos = $2, nombres = $3, correo = $4, clave = $5, 
-                                        activo = $6 WHERE id_seg_usuario = '${id}'`;
-    const values = [codigo, apellidos, nombres, correo, clave, activo];
+    const query = `UPDATE producto SET nombre = $1, descripcion = $2, precio_unitario = $3, 
+                    existencia = $4, tiene_impuesto = $5 WHERE codigo_producto = '${id}'`;
+    const values = [nombre, descripcion, precio_unitario, existencia, tiene_impuesto];
     
-    clientMarket.query(query, values)
+    clientFacturacion.query(query, values)
         .then(() => {
-            res.status(201).send('Usuario actualizado');
+            res.status(201).send('Producto actualizado');
         })
         .catch(err => {
             console.error(err);
-            res.status(400).send('Error al actualizar usuario');
+            res.status(400).send('Error al actualizar producto');
         });
 });
 
-// para eliminar un usuario
-app.delete('/minimarketdemoWeb/apirest/seguridades/usuarios/:id', (req, res) => {
+// para eliminar un producto
+app.delete('/facturacionWeb/apirest/productos/:id', (req, res) => {
     const { id } = req.params;
     
-    clientMarket.query(`DELETE FROM seg_usuario WHERE id_seg_usuario = '${id}'`)
+    clientFacturacion.query(`DELETE FROM producto WHERE codigo_producto = '${id}'`)
         .then(() => {
-            res.status(201).send('Usuario eliminado');
+            res.status(201).send('Producto eliminado');
         })
         .catch(err => {
             console.error(err);
-            res.status(400).send('Error al eliminar usuario');
+            res.status(400).send('Error al eliminar producto');
         });
 });
 
 // Iniciar el servidor
 app.listen(port, () => {
-  console.log(`Servidor en ejecución en el puerto: http://localhost:${port}`);
-});
+    console.log(`Servidor en ejecución en el puerto: http://localhost:${port}`);
+  });
