@@ -62,11 +62,11 @@ app.post('/facturacionWeb/apirest/productos', (req, res) => {
 // para actualizar un producto
 app.put('/facturacionWeb/apirest/productos/:id', (req, res) => {
     const { id } = req.params;
-    const {nombre, descripcion, precio_unitario, existencia, tiene_impuesto} = req.body;
+    const {nombre, descripcion, precio_unitario, tiene_impuesto} = req.body;
 
     const query = `UPDATE producto SET nombre = $1, descripcion = $2, precio_unitario = $3, 
-                    existencia = $4, tiene_impuesto = $5 WHERE codigo_producto = '${id}'`;
-    const values = [nombre, descripcion, precio_unitario, existencia, tiene_impuesto];
+                    tiene_impuesto = $4 WHERE codigo_producto = '${id}'`;
+    const values = [nombre, descripcion, precio_unitario, tiene_impuesto];
     
     clientFacturacion.query(query, values)
         .then(() => {
