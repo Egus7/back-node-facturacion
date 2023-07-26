@@ -301,16 +301,14 @@ app.post('/facturacionWeb/apirest/registrarpedido', (req, res) => {
             return Promise.all(updateStockPromises);
         })
         .then(() => {
-            res.status(201).send('Pedido registrado correctamente');
+            res.status(201).json({ message: 'Pedido registrado correctamente' });
         })
         .catch(err => {
             clientFacturacion.query('ROLLBACK');
             console.error(err);
-            res.status(400).send('Error al registrar el pedido');
+            res.status(400).json({ message: 'Error al registrar el pedido' });
         });
 });
-
-
 
 
 // Iniciar el servidor
