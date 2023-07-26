@@ -311,6 +311,159 @@ app.post('/facturacionWeb/apirest/registrarpedido', (req, res) => {
 });
 
 
+
+// Obtener los datos de las facturas
+app.get('/facturacionWeb/apirest/facturas', (req, res) => {
+    clientFacturacion.query('SELECT * FROM factura_cab ORDER BY numero_factura')
+        .then(response => {
+            res.json(response.rows);
+        })
+        .catch(err => {
+            console.log(err);
+        });
+});
+
+// Obtener los datos de una factura
+app.get('/facturacionWeb/apirest/facturas/:id', (req, res) => {
+    const { id } = req.params;
+    clientFacturacion.query(`SELECT * FROM factura_cab WHERE numero_factura = '${id}'`)
+        .then(response => {
+            res.json(response.rows);
+        })
+        .catch(err => {
+            console.log(err);
+        });
+});
+
+// Obtener los datos de los detalles de facturas
+app.get('/facturacionWeb/apirest/facturas-detalles', (req, res) => {
+    clientFacturacion.query('SELECT * FROM factura_det ORDER BY numero_factura_det')
+        .then(response => {
+            res.json(response.rows);
+        })
+        .catch(err => {
+            console.log(err);
+        });
+});
+
+// Obtener los datos de los detalles de una facturadet
+app.get('/facturacionWeb/apirest/facturas-detalles/:id', (req, res) => {
+    const { id } = req.params;
+    clientFacturacion.query(`SELECT * FROM factura_det WHERE numero_factura_det = '${id}'`)
+        .then(response => {
+            res.json(response.rows);
+        })
+        .catch(err => {
+            console.log(err);
+        });
+});
+
+// Obtener los datos de los detalles de una facturacab en especifico
+app.get('/facturacionWeb/apirest/facturacab-detalles/:id', (req, res) => {
+    const { id } = req.params;
+    clientFacturacion.query(`SELECT * FROM factura_det WHERE numero_factura = '${id}'`)
+        .then(response => {
+            res.json(response.rows);
+        })
+        .catch(err => {
+            console.log(err);
+        });
+});
+
+
+// Método para obtener el producto completo desde la base de datos
+function ObtenerProductoCompleto(codigoProducto) {
+    const queryProducto = 'SELECT * FROM producto WHERE codigo_producto = $1';
+    const valuesProducto = [codigoProducto];
+
+    return clientFacturacion.query(queryProducto, valuesProducto)
+        .then(response => {
+            // Suponiendo que response.rows[0] contiene la información completa del producto
+            return response.rows[0];
+        })
+        .catch(err => {
+            console.error(err);
+            throw new Error('Error al obtener la información del producto');
+        });
+}
+
+//registrar una factura
+app.post('/facturacionWeb/apirest/registrarfactura', async (req, res) => {
+    const { cedula_cliente, fecha_emision, estado, detalles } = req.body;
+
+    // Calcular subtotal, base cero y valor del IVA
+    let subtotal = 0;
+    let baseCero = 0;
+    let valorIVA = 0;
+
+    try {
+        // Calcular subtotal, base cero y valor del IVA
+        for (const detalle of detalles) {
+            // Obtener la información del producto desde la tabla producto
+            const producto = await ObtenerProductoCompleto(detalle.codigo_producto);
+
+            if (producto.tiene_impuesto === 'S') {
+                // Si el producto tiene IVA, se suma al valor del IVA
+                valorIVA += ((detalle.cantidad * detalle.precio_unitario_venta) * 0.12);
+            } else {
+                // Sino, se suma a la base cero
+                baseCero += ((detalle.cantidad * detalle.precio_unitario_venta) * 0);
+            }
+
+            // Calcular subtotal
+            subtotal += detalle.cantidad * detalle.precio_unitario_venta;
+        }
+
+        // Calcular el total
+        let total = subtotal + valorIVA;
+
+        // Iniciar una transacción para el registro de la factura
+        await clientFacturacion.query('BEGIN');
+
+        // Insertar la cabecera de la factura
+        const queryCabecera = `INSERT INTO factura_cab (cedula_cliente, fecha_emision, subtotal, 
+                                                        base_cero, valor_iva, total, estado) 
+                               VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING numero_factura`;
+        const valuesCabecera = [cedula_cliente, fecha_emision, subtotal, baseCero, valorIVA, total, estado];
+
+        const response = await clientFacturacion.query(queryCabecera, valuesCabecera);
+        const numeroFactura = response.rows[0].numero_factura;
+
+        // Insertar los detalles de la factura
+        const insertDetallePromises = detalles.map(detalle => {
+            const { codigo_producto, cantidad, precio_unitario_venta } = detalle;
+            const queryDetalle = `INSERT INTO factura_det (numero_factura, codigo_producto, cantidad, 
+                                                            precio_unitario_venta)
+                                   VALUES ($1, $2, $3, $4)`;
+            const valuesDetalle = [numeroFactura, codigo_producto, cantidad, precio_unitario_venta];
+            return clientFacturacion.query(queryDetalle, valuesDetalle);
+        });
+
+        await Promise.all(insertDetallePromises);
+
+        // Si todo salió bien, hacemos commit
+        await clientFacturacion.query('COMMIT');
+
+        // actualizamos el stock
+        const updateStockPromises = detalles.map(detalle => {
+            const { codigo_producto, cantidad } = detalle;
+            const queryStock = `UPDATE producto SET existencia = existencia - $1 WHERE codigo_producto = $2`;
+            const valuesStock = [cantidad, codigo_producto];
+            return clientFacturacion.query(queryStock, valuesStock);
+        });
+
+        await Promise.all(updateStockPromises);
+    
+        res.status(201).json({ message: 'Factura registrada correctamente' });
+    } catch (error) {
+        // Si ocurrió algún error, hacemos rollback
+        await clientFacturacion.query('ROLLBACK');
+        console.error(error);
+        res.status(400).json({ message: 'Error al registrar la factura' });
+    }
+});
+
+
 // Iniciar el servidor
 app.listen(port, () => {
     console.log(`Servidor en ejecución en el puerto: http://localhost:${port}`);
