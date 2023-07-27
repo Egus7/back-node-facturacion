@@ -314,7 +314,7 @@ app.post('/facturacionWeb/apirest/registrarpedido', (req, res) => {
 
 // Obtener los datos de las facturas
 app.get('/facturacionWeb/apirest/facturas', (req, res) => {
-    clientFacturacion.query('SELECT * FROM factura_cab ORDER BY numero_factura')
+    clientFacturacion.query('SELECT * FROM factura_cab ORDER BY fecha_emision DESC')
         .then(response => {
             res.json(response.rows);
         })
